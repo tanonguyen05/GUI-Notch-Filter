@@ -1,0 +1,78 @@
+import tkinter as tk
+import pyaudio
+import numpy as np
+
+class TinnitusApp:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Tonal Tinnitus Therapy")
+        self.master.geometry("500x450")
+        self.master.configure(bg="#F9F9F9")
+
+        intro_text = "Welcome to the Tonal Tinnitus Therapy program, designed to help alleviate your tonal tinnitus symptoms. This program utilizes a cutting-edge approach based on notch filtering to target specific frequencies associated with your tinnitus, delivering a personalized and effective solution. By filtering out these frequencies in real-time and in the background, the program aims to reduce tinnitus perception and provide relief to those suffering from the condition. Let's get started on the journey to a quieter and more peaceful life."
+        self.intro_label = tk.Label(master, text=intro_text, bg="#F9F9F9", fg="#333333", font=("Helvetica", 12), wraplength=450)
+        self.intro_label.pack(pady=10)
+
+        self.freq_slider = tk.Scale(master, from_=20, to=20000, orient=tk.HORIZONTAL, length=400, bg="#F9F9F9", troughcolor="#CCCCCC", highlightthickness=0, command=self.play_freq)
+        self.freq_slider.pack(pady=10)
+        self.freq_slider.set(5000)  # default to 5 kHz
+
+        self.freq_text = tk.Label(master, text="", bg="#F9F9F9", fg="#333333", font=("Helvetica", 12))
+        self.freq_text.pack(pady=10)
+
+        self.tinnitus_label = tk.Label(master, text="Enter your tinnitus frequency (in Hz):", bg="#F9F9F9", fg="#333333", font=("Helvetica", 12))
+        self.tinnitus_label.pack(pady=10)
+
+        self.tinnitus_entry = tk.Entry(master, bg="#FFFFFF", fg="#333333", font=("Helvetica", 12), highlightthickness=1, highlightbackground="#CCCCCC", highlightcolor="#CCCCCC")
+        self.tinnitus_entry.pack(pady=10)
+
+        self.play_tinnitus_button = tk.Button(master, text="Start Your Therapy", bg="#FF9900", fg="#FFFFFF", font=("Helvetica", 12), relief=tk.FLAT, command=self.play_tinnitus)
+        self.play_tinnitus_button.pack(pady=10)
+
+    def play_freq(self, freq):
+        frequency = int(freq)
+        volume = 0.5
+        duration = 1.0
+        sample_rate = 44100
+        t = np.linspace(0, duration, int(duration * sample_rate), False)
+        samples = (volume * np.sin(2 * np.pi * frequency * t)).astype(np.float32)
+
+        p = pyaudio.PyAudio()
+        stream = p.open(format=pyaudio.paFloat32,
+                        channels=1,
+                        rate=sample_rate,
+                        output=True)
+        stream.write(samples.tobytes())
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+        self.freq_text.config(text=f"Frequency: {frequency} Hz")
+
+    def play_tinnitus(self):
+        try:
+            tinnitus_freq = int(self.tinnitus_entry.get())
+        except ValueError:
+            tk.messagebox.showerror("Error", "Please enter a valid frequency.")
+            return
+
+        volume = 0.5
+        duration = 1.0
+        sample_rate = 44100
+        t = np.linspace(0, duration, int(duration * sample_rate), False)
+        samples = (volume * np.sin(2 * np.pi * tinnitus_freq * t)).astype(np.float32)
+
+        p = pyaudio.PyAudio()
+        stream = p.open(format=pyaudio.paFloat32,
+                        channels=1,
+                        rate=sample_rate,
+                        output=True)
+        stream.write(samples.tobytes())
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = TinnitusApp(root)
+    root.mainloop()
