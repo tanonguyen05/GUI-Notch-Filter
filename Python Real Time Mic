@@ -1,0 +1,47 @@
+import pyaudio
+import numpy as np
+from scipy import signal
+
+# Define notch filter parameters
+Fs = 44100 # Sampling rate
+f0 = input('Notch Frequency? (Hz)\n') # Notch frequency
+Q = 30 # Quality factor
+
+# Define callback function for audio stream
+def callback(in_data, frame_count, time_info, status):
+    # Convert input audio data to numpy array
+    audio_data = np.frombuffer(in_data, dtype=np.float32)
+
+    # Apply notch filter to audio data
+    b, a = signal.iirnotch(f0, Q, Fs)
+    filtered_audio_data = signal.lfilter(b, a, audio_data)
+
+    # Convert filtered audio data back to bytes for playback
+    out_data = filtered_audio_data.astype(np.float32).tobytes()
+
+    return (out_data, pyaudio.paContinue)
+
+# Initialize PyAudio
+p = pyaudio.PyAudio()
+
+# Open audio stream for recording and playback
+stream = p.open(format=pyaudio.paFloat32,
+                channels=1,
+                rate=Fs,
+                input=True,
+                output=True,
+                stream_callback=callback)
+
+# Start audio stream
+stream.start_stream()
+
+# Keep the program running
+while stream.is_active():
+    pass
+
+# Stop audio stream
+stream.stop_stream()
+stream.close()
+
+# Terminate PyAudio
+p.terminate()
